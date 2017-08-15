@@ -6,7 +6,7 @@ import org.radarcns.android.device.DeviceStateCreator;
 
 public class ActiGraphLinkDeviceState extends BaseDeviceState {
     public static final Creator<ActiGraphLinkDeviceState> CREATOR = new DeviceStateCreator<>(ActiGraphLinkDeviceState.class);
-    private float[] acceleration = {0, 0, 0};
+    private float[] acceleration = {Float.NaN, Float.NaN, Float.NaN};
 
     @Override
     public boolean hasAcceleration() {

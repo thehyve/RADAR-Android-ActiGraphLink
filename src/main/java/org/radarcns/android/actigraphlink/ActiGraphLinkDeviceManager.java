@@ -13,7 +13,6 @@ import org.radarcns.android.data.DataCache;
 import org.radarcns.android.data.TableDataHandler;
 import org.radarcns.android.device.BaseDeviceState;
 import org.radarcns.android.device.DeviceManager;
-import org.radarcns.android.device.DeviceStatusListener;
 import org.radarcns.key.MeasurementKey;
 
 import java.io.IOException;
@@ -21,15 +20,16 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.radarcns.android.device.DeviceStatusListener.Status.*;
+
 public class ActiGraphLinkDeviceManager implements DeviceManager {
     private static final String TAG = ActiGraphLinkDeviceManager.class.getSimpleName();
     private final ActiGraphLinkDeviceState deviceState = new ActiGraphLinkDeviceState();
     private final Context context;
     private final TableDataHandler dataHandler;
-    private boolean started;
-    private String deviceId;
-    private AGDeviceLibrary agDeviceLibrary;
     private final DataCache<MeasurementKey, ActiGraphLinkAcceleration> accelerationTable;
+
+    private AGDeviceLibrary agDeviceLibrary;
 
     public ActiGraphLinkDeviceManager(Context context, TableDataHandler dataHandler) {
         this.context = context;
@@ -38,8 +38,8 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
     }
 
     @Override
-    public void start(@NonNull final Set<String> acceptableIds) {
-        if (!started) {
+    public synchronized void start(@NonNull final Set<String> acceptableIds) {
+        if (agDeviceLibrary == null) {
             agDeviceLibrary = AGDeviceLibrary.getInstance();
             agDeviceLibrary.EnumerateDevices();
 
@@ -48,22 +48,8 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
                 public void OnDeviceData(String data) {
                     Log.d(TAG, "Device data: " + data);
 
-                    if (deviceId != null) {
-                        return;
-                    }
                     try {
-                        JSONObject json = new JSONObject(data);
-                        if (json.has("device")) {
-                            String device = json.getString("device");
-                            if (acceptableIds.contains(device)) {
-                                Log.i(TAG, "Connecting to device " + device);
-                                deviceId = device;
-                                deviceState.getId().setSourceId(deviceId);
-                                deviceState.setStatus(DeviceStatusListener.Status.CONNECTING);
-                                agDeviceLibrary.ConnectToDevice(deviceId);
-
-                            }
-                        }
+                        processDeviceData(acceptableIds, new JSONObject(data));
                     } catch (JSONException e) {
                         Log.e(TAG, "Error parsing JSON: " + data, e);
                     }
@@ -80,16 +66,32 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
                     }
                 }
             });
-            started = true;
         }
     }
 
-    private void processDeviceStatus(JSONObject json) throws JSONException {
+    private synchronized void processDeviceData(@NonNull final Set<String> acceptableIds, JSONObject json) throws JSONException {
+        if (deviceState.getStatus() != READY) {
+            return;
+        }
+
+        if (json.has("device")) {
+            String device = json.getString("device");
+            if (acceptableIds.contains(device)) {
+                Log.i(TAG, "Connecting to device " + device);
+                deviceState.getId().setSourceId(device);
+                deviceState.setStatus(CONNECTING);
+                agDeviceLibrary.ConnectToDevice(device);
+
+            }
+        }
+    }
+
+    private synchronized void processDeviceStatus(JSONObject json) throws JSONException {
         if (json.has("deviceConnected")) {
             String device = json.getString("deviceConnected");
             Log.i(TAG, "Device connected: " + device);
 
-            if (Objects.equals(deviceId, device)) {
+            if (isActiveDevice(device)) {
                 String configureIMU = new JSONObject()
                         .put("imu", new JSONObject().put("accelerometer", true))
                         .toString();
@@ -100,15 +102,15 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
                         .toString();
                 agDeviceLibrary.ConfigureDevice(enableStream);
 
-                deviceState.setStatus(DeviceStatusListener.Status.CONNECTED);
+                deviceState.setStatus(CONNECTED);
             }
         }
         if (json.has("deviceDisconnected")) {
             String device = json.getString("deviceDisconnected");
             Log.i(TAG, "Device disconnected: " + device);
 
-            if (Objects.equals(deviceId, device)) {
-                deviceState.setStatus(DeviceStatusListener.Status.DISCONNECTED);
+            if (isActiveDevice(device)) {
+                deviceState.setStatus(DISCONNECTED);
             }
         }
         if (json.has("error")) {
@@ -117,9 +119,9 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
         }
         if (json.has("raw")) {
             JSONObject raw = json.getJSONObject("raw");
-            if (Objects.equals(deviceId, raw.getString("device"))) {
+            if (isActiveDevice(raw.getString("device"))) {
                 double time = Long.parseLong(raw.getString("timestamp"));
-                double timeReceived = TimeUnit.MICROSECONDS.toSeconds(System.currentTimeMillis());
+                double timeReceived = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
                 JSONArray accelerations = raw.getJSONArray("acceleration");
                 for (int i = 0; i < accelerations.length(); i++) {
                     JSONObject acceleration = accelerations.getJSONObject(i);
@@ -133,33 +135,34 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
         }
     }
 
-
     @Override
-    public boolean isClosed() {
-        return !started;
+    public synchronized boolean isClosed() {
+        return agDeviceLibrary == null;
     }
 
     @Override
-    public BaseDeviceState getState() {
+    public synchronized BaseDeviceState getState() {
         return deviceState;
     }
 
     @Override
-    public String getName() {
-        if (deviceId != null) {
-            return deviceId;
+    public synchronized String getName() {
+        if (deviceState.getId().getSourceId() != null) {
+            return deviceState.getId().getSourceId();
         }
         return "No ActiGraph Link devices found";
     }
 
     @Override
-    public void close() throws IOException {
-        if (started) {
-            if (agDeviceLibrary != null) {
-                deviceState.setStatus(DeviceStatusListener.Status.DISCONNECTED);
-                agDeviceLibrary.CancelEnumeration();
-                agDeviceLibrary.DisconnectFromDevice();
-            }
+    public synchronized void close() throws IOException {
+        if (agDeviceLibrary != null) {
+            deviceState.setStatus(DISCONNECTED);
+            agDeviceLibrary.CancelEnumeration();
+            agDeviceLibrary.DisconnectFromDevice();
         }
+    }
+
+    private boolean isActiveDevice(String device) {
+        return Objects.equals(deviceState.getId().getSourceId(), device);
     }
 }

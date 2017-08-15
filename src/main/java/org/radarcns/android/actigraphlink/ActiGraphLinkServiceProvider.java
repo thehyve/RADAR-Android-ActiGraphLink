@@ -5,8 +5,7 @@ import org.radarcns.android.device.DeviceServiceProvider;
 
 import java.util.List;
 
-import static android.Manifest.permission.*;
-import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 
 public class ActiGraphLinkServiceProvider extends DeviceServiceProvider<ActiGraphLinkDeviceState> {
     @Override
@@ -26,6 +25,6 @@ public class ActiGraphLinkServiceProvider extends DeviceServiceProvider<ActiGrap
 
     @Override
     public List<String> needsPermissions() {
-        return asList(ACCESS_COARSE_LOCATION, BLUETOOTH, BLUETOOTH_ADMIN);
+        return emptyList();
     }
 }
