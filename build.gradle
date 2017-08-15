@@ -42,7 +42,7 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:22.2.0'
     compile(name: 'agdevicelibrary-release', ext: 'aar')
-    compile 'org.radarcns:radar-commons-android:0.1'
+    compile 'org.radarcns:radar-commons-android:0.2.1'
     // TODO: Fix me
     compile files('../RADAR-Schemas/java-sdk/radar-schemas-commons/build/libs/radar-schemas-commons-0.1.jar')
 }
