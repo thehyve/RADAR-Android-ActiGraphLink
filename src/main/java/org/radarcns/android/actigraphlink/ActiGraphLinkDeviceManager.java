@@ -120,7 +120,7 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
         if (json.has("raw")) {
             JSONObject raw = json.getJSONObject("raw");
             if (isActiveDevice(raw.getString("device"))) {
-                double time = Long.parseLong(raw.getString("timestamp"));
+                double time = raw.getLong("timestamp");
                 double timeReceived = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
                 JSONArray accelerations = raw.getJSONArray("acceleration");
                 for (int i = 0; i < accelerations.length(); i++) {
