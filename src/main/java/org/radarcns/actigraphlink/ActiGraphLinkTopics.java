@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.radarcns.android.actigraphlink;
+package org.radarcns.actigraphlink;
 
-import org.radarcns.actigraphlink.ActiGraphLinkAcceleration;
 import org.radarcns.android.device.DeviceTopics;
 import org.radarcns.key.MeasurementKey;
 import org.radarcns.topic.AvroTopic;

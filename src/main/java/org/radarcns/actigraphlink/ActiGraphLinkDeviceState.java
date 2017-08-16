@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.radarcns.android.actigraphlink;
+package org.radarcns.actigraphlink;
 
 import android.os.Parcel;
 import org.radarcns.android.device.BaseDeviceState;

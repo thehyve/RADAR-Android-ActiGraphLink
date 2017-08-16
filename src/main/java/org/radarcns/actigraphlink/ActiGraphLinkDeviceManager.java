@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.radarcns.android.actigraphlink;
+package org.radarcns.actigraphlink;
 
 import actigraph.deviceapi.AGDeviceLibrary;
 import actigraph.deviceapi.AGDeviceLibraryListener;
@@ -24,7 +24,6 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.radarcns.actigraphlink.ActiGraphLinkAcceleration;
 import org.radarcns.android.data.DataCache;
 import org.radarcns.android.data.TableDataHandler;
 import org.radarcns.android.device.BaseDeviceState;
