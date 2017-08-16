@@ -24,7 +24,7 @@ import org.radarcns.android.device.DeviceTopics;
 public class ActiGraphLinkService extends DeviceService {
     @Override
     protected DeviceManager createDeviceManager() {
-        return new ActiGraphLinkDeviceManager(this, getDataHandler());
+        return new ActiGraphLinkDeviceManager(this);
     }
 
     @Override

@@ -18,14 +18,12 @@ package org.radarcns.actigraphlink;
 
 import actigraph.deviceapi.AGDeviceLibrary;
 import actigraph.deviceapi.AGDeviceLibraryListener;
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.radarcns.android.data.DataCache;
-import org.radarcns.android.data.TableDataHandler;
 import org.radarcns.android.device.BaseDeviceState;
 import org.radarcns.android.device.DeviceManager;
 import org.radarcns.key.MeasurementKey;
@@ -40,16 +38,15 @@ import static org.radarcns.android.device.DeviceStatusListener.Status.*;
 public class ActiGraphLinkDeviceManager implements DeviceManager {
     private static final String TAG = ActiGraphLinkDeviceManager.class.getSimpleName();
     private final ActiGraphLinkDeviceState deviceState = new ActiGraphLinkDeviceState();
-    private final Context context;
-    private final TableDataHandler dataHandler;
+    private final ActiGraphLinkService service;
     private final DataCache<MeasurementKey, ActiGraphLinkAcceleration> accelerationTable;
 
     private AGDeviceLibrary agDeviceLibrary;
 
-    public ActiGraphLinkDeviceManager(Context context, TableDataHandler dataHandler) {
-        this.context = context;
-        this.dataHandler = dataHandler;
-        this.accelerationTable = dataHandler.getCache(ActiGraphLinkTopics.getInstance().getAccelerationTopic());
+    public ActiGraphLinkDeviceManager(ActiGraphLinkService service) {
+        this.service = service;
+        this.accelerationTable = service.getDataHandler().getCache(ActiGraphLinkTopics.getInstance().getAccelerationTopic());
+        this.deviceState.getId().setUserId(service.getUserId());
     }
 
     @Override
@@ -58,7 +55,7 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
             agDeviceLibrary = AGDeviceLibrary.getInstance();
             agDeviceLibrary.EnumerateDevices();
 
-            agDeviceLibrary.registerLibraryListener(context, new AGDeviceLibraryListener() {
+            agDeviceLibrary.registerLibraryListener(service, new AGDeviceLibraryListener() {
                 @Override
                 public void OnDeviceData(String data) {
                     Log.d(TAG, "Device data: " + data);
@@ -96,7 +93,6 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
                 deviceState.getId().setSourceId(device);
                 deviceState.setStatus(CONNECTING);
                 agDeviceLibrary.ConnectToDevice(device);
-
             }
         }
     }
@@ -143,7 +139,7 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
                     float x = (float) acceleration.getDouble("x");
                     float y = (float) acceleration.getDouble("y");
                     float z = (float) acceleration.getDouble("z");
-                    dataHandler.addMeasurement(accelerationTable, deviceState.getId(), new ActiGraphLinkAcceleration(time, timeReceived, x, y, z));
+                    service.getDataHandler().addMeasurement(accelerationTable, deviceState.getId(), new ActiGraphLinkAcceleration(time, timeReceived, x, y, z));
                     deviceState.setAcceleration(x, y, z);
                 }
             }
