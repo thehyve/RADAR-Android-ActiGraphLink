@@ -15,7 +15,7 @@ apply plugin: 'maven'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '25.0.3'
+    buildToolsVersion '26.0.1'
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 26
@@ -52,10 +52,11 @@ version = android.defaultConfig.versionName
 repositories {
     mavenLocal()
     jcenter()
+    maven { url "https://maven.google.com" }
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.android.support:appcompat-v7:26.0.1'
     // installed with mvn install:install-file -Dfile=libs/agdevicelibrary-release.aar -Dgroup=actigraph -DartifactId=agdevicelibrary -Dversion=release -Dpackaging=aar
     // TODO: make a part of the gradle build
     compile 'actigraph:agdevicelibrary:release@aar'
