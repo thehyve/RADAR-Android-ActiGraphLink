@@ -55,17 +55,12 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:22.2.0'
-    compile(name: 'agdevicelibrary-release', ext: 'aar')
+    // installed with mvn install:install-file -Dfile=libs/agdevicelibrary-release.aar -Dgroup=actigraph -DartifactId=agdevicelibrary -Dversion=release -Dpackaging=aar
+    // TODO: make a part of the gradle build
+    compile 'actigraph:agdevicelibrary:release@aar'
     compile 'org.radarcns:radar-commons-android:0.2.1'
     compile 'org.radarcns:radar-schemas-commons:0.2-alpha.1'
-}
-
-repositories {
-    flatDir {
-        dirs 'libs'
-    }
 }
 
 uploadArchives {
