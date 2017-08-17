@@ -68,3 +68,8 @@ uploadArchives {
         mavenLocal()
     }
 }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.4.1'
+    distributionUrl distributionUrl.replace("bin", "all")
+}
