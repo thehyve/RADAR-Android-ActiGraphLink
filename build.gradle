@@ -31,7 +31,8 @@ android {
     productFlavors {
     }
     lintOptions {
-        abortOnError false
+        abortOnError true
+        lintConfig file("lint.xml")
     }
     packagingOptions {
         exclude 'META-INF/LICENSE'
