@@ -51,9 +51,9 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
 
     @Override
     public synchronized void start(@NonNull final Set<String> acceptableIds) {
+        Log.i(TAG, "Starting. Acceptable devices: " + acceptableIds);
         if (agDeviceLibrary == null) {
             agDeviceLibrary = AGDeviceLibrary.getInstance();
-            agDeviceLibrary.EnumerateDevices();
 
             agDeviceLibrary.registerLibraryListener(service, new AGDeviceLibraryListener() {
                 @Override
@@ -79,20 +79,30 @@ public class ActiGraphLinkDeviceManager implements DeviceManager {
                 }
             });
         }
+
+        deviceState.setStatus(READY);
+        agDeviceLibrary.EnumerateDevices();
     }
 
     private synchronized void processDeviceData(@NonNull final Set<String> acceptableIds, JSONObject json) throws JSONException {
-        if (deviceState.getStatus() != READY) {
-            return;
-        }
-
         if (json.has("device")) {
             String device = json.getString("device");
             if (acceptableIds.contains(device)) {
-                Log.i(TAG, "Connecting to device " + device);
-                deviceState.getId().setSourceId(device);
-                deviceState.setStatus(CONNECTING);
-                agDeviceLibrary.ConnectToDevice(device);
+                switch (deviceState.getStatus()) {
+                    case READY: {
+                        Log.i(TAG, "Connecting to device " + device);
+                        deviceState.getId().setSourceId(device);
+                        deviceState.setStatus(CONNECTING);
+                        agDeviceLibrary.ConnectToDevice(device);
+                        break;
+                    }
+                    case CONNECTING: {
+                        if (!isActiveDevice(device)) {
+                            Log.w(TAG,"Another acceptable device: " + device);
+                        }
+                        break;
+                    }
+                }
             }
         }
     }
